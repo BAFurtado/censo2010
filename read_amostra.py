@@ -1,14 +1,30 @@
+import ftplib
 import os
+
 import pandas as pd
 
 
-folder = r'\\sasworkspace1\publico\Bernardo Alves Furtado (Dirur)\Censo 2010\Amostra'
-# OLD FILES
+def download_from_ibge(path, directory):
+    """ Download all zip files of census tract data """
+    ftp = ftplib.FTP(path)
+    ftp.login("anonymous", "censo2010")
+    ftp.cwd(directory)
+    files = ftp.nlst()
 
-p2 = r'\\storage6\bases2\NINSOC\Bases\Censo_Demografico\2010\Agregados_por_Setores_Censitarios'
-p3 = r'\AC_20171016\AC\Base informaçoes setores2010 universo AC\CSV'
-files = os.listdir(os.path.join(p2, p3))
+    for file in files:
+        with open(os.path.join('data', file), 'wb') as f:
+            ftp.retrbinary('RETR ' + file, f.write)
 
-# Got the folder with the files, now, get the correct questions.
-dom_files = [f for f in files if f.startswith('dom_')]
-pes_files = [f for f in files if f.startswith('pes')]
+
+def unzip_files_temp(file):
+    pass
+
+
+def extract_data(file):
+    pass
+
+
+if __name__ == '__main__':
+    site = r"ftp.ibge.gov.br"
+    folder = r'Censos/Censo_Demografico_2010/Resultados_Gerais_da_Amostra/Microdados'
+    download_from_ibge(site, folder)
