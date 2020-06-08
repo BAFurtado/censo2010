@@ -7,8 +7,8 @@ list_muns = [str(m) for m in list_muns]
 
 # Getting string of states that include all municipalities of interest
 states = list(set([state[:2] for state in list_muns]))
-states_link = pd.read_csv('data/STATES_ID_NUM.csv', sep=';')
-states_link = list(states_link[states_link['nummun'].astype(str).isin(states)].loc[:, 'codmun'])
+states_ = pd.read_csv('data/STATES_ID_NUM.csv', sep=';')
+states_link = list(states_[states_['nummun'].astype(str).isin(states)].loc[:, 'codmun'])
 
 # Restricting mapping from sectors to weighted areas for municipalities of interest only
 aps = pd.read_csv('data/areas_ponderacao_setores.csv', encoding='utf-16', sep='\t')
