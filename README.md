@@ -1,4 +1,7 @@
-This is just a documented script.
+# Geração População Artificial por Áreas de Ponderação Censo 2010 IBGE
+This is just a documented script. We gather official data and use generator at 
+https://github.com/BAFurtado/home_violence to come up with a random artificial population with gender, age and years 
+of study at the level of census tracts.
 
 It acquires data from Brazilian official statistics bureau (ibge.gov.br) and organizes the data for the format needed 
 at https://github.com/BAFurtado/home_violence

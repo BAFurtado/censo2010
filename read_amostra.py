@@ -8,7 +8,15 @@ import pandas as pd
 
 from sectors_of_interest import list_muns, states_link, aps
 
+
+def convert_to_decimals(x):
+    return float(x[:3] + '.' + x[3:])
+
+
 columns_interest = [i for i in range(36, 136)] + [0, 23]
+names_columns_weighted_areas = ['AREAP', 'weight', 'V0629', 'V0630', 'V0631', 'V6400']
+converters = {'AREAP': str, 'weight': convert_to_decimals, 'V0629': str, 'V0630': str, 'V0631': str, 'V6400': str}
+columns_weighted_areas = [(7, 20), (28, 44), (147, 149), (149, 151), (151, 152), (157, 158)]
 
 
 def download_from_ibge(path, directory, flag='setores'):
@@ -78,10 +86,10 @@ def extract_data(male, female):
     return pd.concat([male, female])
 
 
-def main():
+def get_sectors():
     site = r"ftp.ibge.gov.br"
     folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
-    # download_from_ibge(site, folder, 'setores')
+    download_from_ibge(site, folder, 'setores')
     # After downloading, unzip one by one, extract data and delete, except original zipfile
     # Get list of files
     sectors = r'data/setores'
@@ -102,17 +110,31 @@ def main():
         data = data.rename(columns={'value': 'num_people'})
         output = pd.concat([output, data])
         shutil.rmtree(os.path.join(sectors, unzipped_path[0]))
-    output.to_csv('processed/output.csv', sep=';', index=False)
+    output.to_csv('processed/num_people_age_gender_AP.csv', sep=';', index=False)
     shutil.rmtree(sectors)
     return output
 
 
-def main2():
-    pass
-    # delete
-    # folder2 = r'Censos/Censo_Demografico_2010/Resultados_Gerais_da_Amostra/Microdados'
-    # download_from_ibge(site, folder2, 'amostra')
+def extract_txt(file_location):
+    return pd.read_fwf(file_location, colspecs=columns_weighted_areas, names=names_columns_weighted_areas,
+                       header=None, converters=converters)
+
+
+def get_weighted_areas():
+    site = r"ftp.ibge.gov.br"
+    folder = r'Censos/Censo_Demografico_2010/Resultados_Gerais_da_Amostra/Microdados'
+    download_from_ibge(site, folder, 'amostra')
+    areas = r'data/amostra'
+    files = os.listdir(areas)
+    for file in files:
+        unzipped_path = unzip_files_temp(file, areas)
+        if not unzipped_path:
+            continue
+        data = extract_txt(unzipped_path[4])
+
+    return 10
 
 
 if __name__ == '__main__':
-    o = main()
+    o = get_sectors()
+    p = get_weighted_areas()
