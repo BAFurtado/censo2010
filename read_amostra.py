@@ -32,6 +32,8 @@ def download_from_ibge(path, directory, flag='setores'):
 
 
 def unzip_files_temp(file, flag=r'data/setores'):
+    if not os.path.exists(flag):
+        os.mkdir(flag)
     # importing required modules
     # opening the zip file in READ mode
     try:
@@ -153,6 +155,44 @@ def get_weighted_areas():
     return output
 
 
+def get_etnia():
+    site = r"ftp.ibge.gov.br"
+    folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
+    download_from_ibge(site, folder, 'setores')
+    # After downloading, unzip one by one, extract data and delete, except original zipfile
+    # Get list of files
+    sectors = r'data/setores'
+    files = os.listdir(sectors)
+    output = pd.DataFrame()
+    for file in files:
+        unzipped_path = unzip_files_temp(file, sectors)
+        if not unzipped_path:
+            continue
+        try:
+            data = pd.read_csv(os.path.join(sectors, unzipped_path[14]), sep=';')
+        except FileNotFoundError:
+            continue
+        data = data[['Cod_setor', 'V002', 'V003', 'V004', 'V005', 'V006']]
+        data = data.replace('X', 0)
+        data = pd.merge(data, aps, on='Cod_setor', how='inner')
+        data = data.astype(int)
+        data = data.groupby('AREAP').agg(sum)
+        data = data.drop('Cod_setor', axis=1)
+        data = data.reset_index()
+        names = ['branca', 'preta', 'amarela', 'parda', 'indigena']
+        new = pd.DataFrame()
+        new['AREAP'] = data['AREAP']
+        for each in [1, 2, 3, 4, 5]:
+            new[names[each - 1]] = data.apply(lambda x: x[each] / x[1:5].sum(), axis=1)
+        new = new.melt(id_vars=['AREAP'], var_name=['cor'])
+        output = pd.concat([output, new])
+        shutil.rmtree(os.path.join(sectors, unzipped_path[0]))
+    output.to_csv('processed/etnia_ap.csv', sep=';', index=False)
+    shutil.rmtree(sectors)
+    return output
+
+
 if __name__ == '__main__':
     # o = get_sectors()
-    p = get_weighted_areas()
+    # p = get_weighted_areas()
+    e = get_etnia()
