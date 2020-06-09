@@ -5,7 +5,7 @@ from zipfile import ZipFile
 from zipfile import BadZipFile
 
 import pandas as pd
-
+import numpy as np
 from sectors_of_interest import list_muns, states_link, aps
 
 
@@ -131,7 +131,17 @@ def get_weighted_areas():
         if not unzipped_path:
             continue
         data = extract_txt(unzipped_path[4])
-
+        # Non-weighted
+        # data = data.groupby('AREAP')['V6400'].value_counts()
+        # Weighted
+        data = data.groupby('AREAP').apply(lambda x: np.bincount(x['V6400'], weights=x['weight'])).reset_index()
+        for each in [1, 2, 3, 4]:
+            data[each] = data[0].apply(lambda x: x[each] / x.sum())
+        for i in data[0].index:
+            try:
+                data.loc[i, 5] = data.loc[i, 0][5] / data.loc[i, 0].sum()
+            except IndexError:
+                data.loc[i, 5] = 0
     return 10
 
 
