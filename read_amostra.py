@@ -73,6 +73,8 @@ def extract_txt(file_location):
 
 
 def get_weighted_areas():
+    """ Download txt files of weighted areas from IBGE and process attained level of education
+    """
     site = r"ftp.ibge.gov.br"
     folder = r'Censos/Censo_Demografico_2010/Resultados_Gerais_da_Amostra/Microdados'
     download_from_ibge(site, folder, 'amostra')
@@ -84,8 +86,6 @@ def get_weighted_areas():
         if not unzipped_path:
             continue
         data = extract_txt(os.path.join(areas, unzipped_path[4]))
-        # Non-weighted
-        # data = data.groupby('AREAP')['V6400'].value_counts()
         # Weighted
         data = data.groupby('AREAP').apply(lambda x: np.bincount(x['V6400'], weights=x['weight'])).reset_index()
         for each in [1, 2, 3, 4]:
@@ -164,6 +164,8 @@ def extract_age_gender(male, female):
 
 
 def read_age_gender(files, sectors):
+    """ Auxiliary function to read age and gender from sectors tables
+    """
     results = dict()
     output = pd.DataFrame()
     for file in files:
@@ -184,10 +186,33 @@ def read_age_gender(files, sectors):
 
 
 def get_wage_num_family(files, sectors):
-    pass
+    output = pd.DataFrame()
+    for file in files:
+        unzipped_path = unzip_files_temp(file, sectors)
+        if not unzipped_path:
+            continue
+        try:
+            data = pd.read_csv(os.path.join(sectors, unzipped_path[3]), sep=';', encoding='latin-1', decimal=',')
+        except FileNotFoundError:
+            continue
+        # Variables of interest (mu, sigma for number of people per family and nominal wage)
+        data = data[['Cod_setor', 'V003', 'V004', 'V009', 'V010']]
+        data = pd.merge(data, aps, on='Cod_setor', how='inner')
+        # Average of averages and variances of sectors by weighted areas
+        data = data.groupby('AREAP').agg(np.mean)
+        data = data.drop('Cod_setor', axis=1)
+        data = data.reset_index()
+        output = pd.concat([output, data])
+    output = output.rename(columns={'V003': 'avg_num_people', 'V004': 'var_num_people',
+                                    'V009': 'avg_wage', 'V010': 'var_wage'})
+    output.to_csv('processed/average_variance_family_wages.csv', sep=';', index=False)
+    return output
 
 
 def get_sectors():
+    """ General download and send list of sectors tables for picking up of details of age, gender, color, wage and
+    average number of people in the family, by census sectors.
+    """
     site = r"ftp.ibge.gov.br"
     folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
     download_from_ibge(site, folder, 'setores')
@@ -195,8 +220,9 @@ def get_sectors():
     # Get list of files
     sectors = r'data/setores'
     files = os.listdir(sectors)
-    output1 = read_age_gender(files, sectors)
-    output2 = get_color(files, sectors)
+    # output1 = read_age_gender(files, sectors)
+    # output2 = get_color(files, sectors)
+    output1, output2 = None, None
     output3 = get_wage_num_family(files, sectors)
     shutil.rmtree(sectors)
     return output1, output2, output3
@@ -205,5 +231,5 @@ def get_sectors():
 if __name__ == '__main__':
     if not os.path.exists('data/processed'):
         os.mkdir('data/processed')
-    o = get_sectors()
+    n, m, o = get_sectors()
     # p = get_weighted_areas()
