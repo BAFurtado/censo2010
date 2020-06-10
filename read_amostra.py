@@ -158,10 +158,13 @@ def get_weighted_areas():
 def get_etnia():
     site = r"ftp.ibge.gov.br"
     folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
+    sectors = r'data/setores'
+    if not os.path.exists(sectors):
+        os.mkdir(sectors)
     download_from_ibge(site, folder, 'setores')
     # After downloading, unzip one by one, extract data and delete, except original zipfile
     # Get list of files
-    sectors = r'data/setores'
+
     files = os.listdir(sectors)
     output = pd.DataFrame()
     for file in files:

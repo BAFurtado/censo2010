@@ -2,7 +2,7 @@
 
 This is just a documented script. We gather official data and use generator at 
 https://github.com/BAFurtado/home_violence to come up with a random artificial population with gender, age and years 
-of study at the level of census tracts.
+of study and color at the level of census tracts.
 
 It acquires data from Brazilian official statistics bureau (ibge.gov.br) and organizes the data for the format needed 
 at https://github.com/BAFurtado/home_violence
