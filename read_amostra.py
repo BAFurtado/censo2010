@@ -220,9 +220,8 @@ def get_sectors():
     # Get list of files
     sectors = r'data/setores'
     files = os.listdir(sectors)
-    # output1 = read_age_gender(files, sectors)
-    # output2 = get_color(files, sectors)
-    output1, output2 = None, None
+    output1 = read_age_gender(files, sectors)
+    output2 = get_color(files, sectors)
     output3 = get_wage_num_family(files, sectors)
     shutil.rmtree(sectors)
     return output1, output2, output3
@@ -232,4 +231,4 @@ if __name__ == '__main__':
     if not os.path.exists('data/processed'):
         os.mkdir('data/processed')
     n, m, o = get_sectors()
-    # p = get_weighted_areas()
+    p = get_weighted_areas()
