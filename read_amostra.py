@@ -10,6 +10,8 @@ from sectors_of_interest import list_muns, states_link, aps
 
 
 def convert_to_decimals(x):
+    """ Auxiliary function for the text reading of weights on text files from IBGE
+    """
     return float(x[:3] + '.' + x[3:])
 
 
@@ -32,6 +34,9 @@ def download_from_ibge(path, directory, flag='setores'):
 
 
 def unzip_files_temp(file, flag=r'data/setores'):
+    """ Automatic unzip files. If encounters new directory, go down one level and try again.
+        After unzipping, returns list of files
+        """
     if not os.path.exists(flag):
         os.mkdir(flag)
     # importing required modules
@@ -60,64 +65,9 @@ def unzip_files_temp(file, flag=r'data/setores'):
     return path
 
 
-def extract_data(male, female):
-    result = list()
-    for each in [male, female]:
-        each['mun'] = each['Cod_setor'].astype(str).str[:7]
-        each = each[each['mun'].isin(list_muns)]
-        if len(each) == 0:
-            return
-        each = each.iloc[:, columns_interest]
-        new_columns = [str(int(x[2:]) - 34) if x.startswith('V0') and x != 'V022' else x for x in each.columns]
-        new_columns = [str(int(x[1:]) - 34) if x.startswith('V') and x != 'V022' else x for x in new_columns]
-        new_columns = ['0' if x == 'V022' else x for x in new_columns]
-        each.columns = new_columns
-        each = pd.merge(each, aps, on='Cod_setor', how='inner')
-
-        # Some sectors with less than five residences, have omitted information, included as 'X'. Replace them
-        each = each.replace('X', 0)
-        each = each.astype(int)
-        each = each.groupby('AREAP').agg(sum)
-        each = each.drop('Cod_setor', axis=1)
-        each = each.reset_index()
-        result.append(each)
-    male = result[0]
-    female = result[1]
-    male['gender'] = 2
-    female['gender'] = 1
-    return pd.concat([male, female])
-
-
-def get_sectors():
-    site = r"ftp.ibge.gov.br"
-    folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
-    download_from_ibge(site, folder, 'setores')
-    # After downloading, unzip one by one, extract data and delete, except original zipfile
-    # Get list of files
-    sectors = r'data/setores'
-    files = os.listdir(sectors)
-    results = dict()
-    output = pd.DataFrame()
-    for file in files:
-        unzipped_path = unzip_files_temp(file, sectors)
-        if not unzipped_path:
-            continue
-        try:
-            results['male'] = pd.read_csv(os.path.join(sectors, unzipped_path[22]), sep=';')
-            results['female'] = pd.read_csv(os.path.join(sectors, unzipped_path[23]), sep=';')
-        except FileNotFoundError:
-            continue
-        data = extract_data(results['male'], results['female'])
-        data = data.melt(id_vars=['AREAP', 'gender'], var_name=['age'])
-        data = data.rename(columns={'value': 'num_people'})
-        output = pd.concat([output, data])
-        shutil.rmtree(os.path.join(sectors, unzipped_path[0]))
-    output.to_csv('processed/num_people_age_gender_AP.csv', sep=';', index=False)
-    shutil.rmtree(sectors)
-    return output
-
-
 def extract_txt(file_location):
+    """ Auxiliary function to read fixed_weighted_files from txt from IBGE
+    """
     return pd.read_fwf(file_location, colspecs=columns_weighted_areas, names=names_columns_weighted_areas,
                        header=None, converters=converters)
 
@@ -125,7 +75,7 @@ def extract_txt(file_location):
 def get_weighted_areas():
     site = r"ftp.ibge.gov.br"
     folder = r'Censos/Censo_Demografico_2010/Resultados_Gerais_da_Amostra/Microdados'
-    # download_from_ibge(site, folder, 'amostra')
+    download_from_ibge(site, folder, 'amostra')
     areas = r'data/amostra'
     files = os.listdir(areas)
     output = pd.DataFrame()
@@ -155,17 +105,7 @@ def get_weighted_areas():
     return output
 
 
-def get_etnia():
-    site = r"ftp.ibge.gov.br"
-    folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
-    sectors = r'data/setores'
-    if not os.path.exists(sectors):
-        os.mkdir(sectors)
-    download_from_ibge(site, folder, 'setores')
-    # After downloading, unzip one by one, extract data and delete, except original zipfile
-    # Get list of files
-
-    files = os.listdir(sectors)
+def get_color(files, sectors):
     output = pd.DataFrame()
     for file in files:
         unzipped_path = unzip_files_temp(file, sectors)
@@ -189,13 +129,81 @@ def get_etnia():
             new[names[each - 1]] = data.apply(lambda x: x[each] / x[1:5].sum(), axis=1)
         new = new.melt(id_vars=['AREAP'], var_name=['cor'])
         output = pd.concat([output, new])
-        shutil.rmtree(os.path.join(sectors, unzipped_path[0]))
     output.to_csv('processed/etnia_ap.csv', sep=';', index=False)
-    shutil.rmtree(sectors)
     return output
 
 
+def extract_age_gender(male, female):
+    """ Gather number of people by gender and age
+    """
+    result = list()
+    for each in [male, female]:
+        each['mun'] = each['Cod_setor'].astype(str).str[:7]
+        each = each[each['mun'].isin(list_muns)]
+        if len(each) == 0:
+            return
+        each = each.iloc[:, columns_interest]
+        new_columns = [str(int(x[2:]) - 34) if x.startswith('V0') and x != 'V022' else x for x in each.columns]
+        new_columns = [str(int(x[1:]) - 34) if x.startswith('V') and x != 'V022' else x for x in new_columns]
+        new_columns = ['0' if x == 'V022' else x for x in new_columns]
+        each.columns = new_columns
+        each = pd.merge(each, aps, on='Cod_setor', how='inner')
+
+        # Some sectors with less than five residences, have omitted information, included as 'X'. Replace them
+        each = each.replace('X', 0)
+        each = each.astype(int)
+        each = each.groupby('AREAP').agg(sum)
+        each = each.drop('Cod_setor', axis=1)
+        each = each.reset_index()
+        result.append(each)
+    male = result[0]
+    female = result[1]
+    male['gender'] = 2
+    female['gender'] = 1
+    return pd.concat([male, female])
+
+
+def read_age_gender(files, sectors):
+    results = dict()
+    output = pd.DataFrame()
+    for file in files:
+        unzipped_path = unzip_files_temp(file, sectors)
+        if not unzipped_path:
+            continue
+        try:
+            results['male'] = pd.read_csv(os.path.join(sectors, unzipped_path[22]), sep=';')
+            results['female'] = pd.read_csv(os.path.join(sectors, unzipped_path[23]), sep=';')
+        except FileNotFoundError:
+            continue
+        data = extract_age_gender(results['male'], results['female'])
+        data = data.melt(id_vars=['AREAP', 'gender'], var_name=['age'])
+        data = data.rename(columns={'value': 'num_people'})
+        output = pd.concat([output, data])
+    output.to_csv('processed/num_people_age_gender_AP.csv', sep=';', index=False)
+    return output
+
+
+def get_wage_num_family(files, sectors):
+    pass
+
+
+def get_sectors():
+    site = r"ftp.ibge.gov.br"
+    folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
+    download_from_ibge(site, folder, 'setores')
+    # After downloading, unzip one by one, extract data and delete, except original zipfile
+    # Get list of files
+    sectors = r'data/setores'
+    files = os.listdir(sectors)
+    output1 = read_age_gender(files, sectors)
+    output2 = get_color(files, sectors)
+    output3 = get_wage_num_family(files, sectors)
+    shutil.rmtree(sectors)
+    return output1, output2, output3
+
+
 if __name__ == '__main__':
-    # o = get_sectors()
+    if not os.path.exists('data/processed'):
+        os.mkdir('data/processed')
+    o = get_sectors()
     # p = get_weighted_areas()
-    e = get_etnia()
