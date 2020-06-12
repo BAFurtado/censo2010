@@ -48,7 +48,7 @@ def unzip_files_temp(file, flag=r'data/setores'):
         with ZipFile(os.path.join(flag, file), 'r') as zip_ref:
             # Extracting all the files
             path = zip_ref.namelist()
-            zip_ref.extractall(flag)
+            # zip_ref.extractall(flag)
     except BadZipFile:
         return
     except IsADirectoryError as e:
@@ -59,7 +59,7 @@ def unzip_files_temp(file, flag=r'data/setores'):
             # Extracting all the files
             # zip_ref.printdir()
             path = zip_ref.namelist()
-            zip_ref.extractall(flag)
+            # zip_ref.extractall(flag)
     return path
 
 
@@ -140,13 +140,15 @@ def extract_age_gender(male, female):
         each = each[each['mun'].isin(list_muns)]
         if len(each) == 0:
             return
+        if 'Cod_se' in each.columns:
+            # A file from SP has an extra column. I know. Go figure.
+            each = each.drop('Cod_se', axis=1)
         each = each.iloc[:, columns_interest]
         new_columns = [str(int(x[2:]) - 34) if x.startswith('V0') and x != 'V022' else x for x in each.columns]
         new_columns = [str(int(x[1:]) - 34) if x.startswith('V') and x != 'V022' else x for x in new_columns]
         new_columns = ['0' if x == 'V022' else x for x in new_columns]
         each.columns = new_columns
         each = pd.merge(each, aps, on='Cod_setor', how='inner')
-
         # Some sectors with less than five residences, have omitted information, included as 'X'. Replace them
         each = each.replace('X', 0)
         each = each.astype(int)
@@ -170,15 +172,24 @@ def read_age_gender(files, sectors):
         unzipped_path = unzip_files_temp(file, sectors)
         if not unzipped_path:
             continue
-        try:
-            results['male'] = pd.read_csv(os.path.join(sectors, unzipped_path[22]), sep=';')
-            results['female'] = pd.read_csv(os.path.join(sectors, unzipped_path[23]), sep=';')
-        except FileNotFoundError:
-            continue
-        data = extract_age_gender(results['male'], results['female'])
-        data = data.melt(id_vars=['AREAP', 'gender'], var_name=['age'])
-        data = data.rename(columns={'value': 'num_people'})
-        output = pd.concat([output, data])
+        keys = list()
+        for each in unzipped_path:
+            if 'Pessoa11_' in each and '.csv' in each and each.split('_')[-1][:2] in states_link:
+                keys.append(each)
+            elif 'Pessoa12_' in each and '.csv' in each and each.split('_')[-1][:2] in states_link:
+                keys.append(each)
+        if len(keys) == 2:
+            print(keys[0])
+            print(keys[1])
+            try:
+                results['male'] = pd.read_csv(os.path.join(sectors, keys[0]), sep=';')
+                results['female'] = pd.read_csv(os.path.join(sectors, keys[1]), sep=';')
+            except FileNotFoundError:
+                continue
+            data = extract_age_gender(results['male'], results['female'])
+            data = data.melt(id_vars=['AREAP', 'gender'], var_name=['age'])
+            data = data.rename(columns={'value': 'num_people'})
+            output = pd.concat([output, data])
     output.to_csv('processed/num_people_age_gender_AP.csv', sep=';', index=False)
     return output
 
@@ -189,18 +200,21 @@ def get_wage_num_family(files, sectors):
         unzipped_path = unzip_files_temp(file, sectors)
         if not unzipped_path:
             continue
-        try:
-            data = pd.read_csv(os.path.join(sectors, unzipped_path[3]), sep=';', encoding='latin-1', decimal=',')
-        except FileNotFoundError:
-            continue
-        # Variables of interest (mu, sigma for number of people per family and nominal wage)
-        data = data[['Cod_setor', 'V003', 'V004', 'V009', 'V010']]
-        data = pd.merge(data, aps, on='Cod_setor', how='inner')
-        # Average of averages and variances of sectors by weighted areas
-        data = data.groupby('AREAP').agg(np.mean)
-        data = data.drop('Cod_setor', axis=1)
-        data = data.reset_index()
-        output = pd.concat([output, data])
+        for each in unzipped_path:
+            if 'Basico_' in each and '.csv' in each and each.split('_')[-1][:2] in states_link:
+                print(each)
+                try:
+                    data = pd.read_csv(os.path.join(sectors, unzipped_path[3]), sep=';', encoding='latin-1', decimal=',')
+                except FileNotFoundError:
+                    continue
+                # Variables of interest (mu, sigma for number of people per family and nominal wage)
+                data = data[['Cod_setor', 'V003', 'V004', 'V009', 'V010']]
+                data = pd.merge(data, aps, on='Cod_setor', how='inner')
+                # Average of averages and variances of sectors by weighted areas
+                data = data.groupby('AREAP').agg(np.mean)
+                data = data.drop('Cod_setor', axis=1)
+                data = data.reset_index()
+                output = pd.concat([output, data])
     output = output.rename(columns={'V003': 'avg_num_people', 'V004': 'var_num_people',
                                     'V009': 'avg_wage', 'V010': 'var_wage'})
     output.to_csv('processed/average_variance_family_wages.csv', sep=';', index=False)
@@ -211,9 +225,9 @@ def get_sectors():
     """ General download and send list of sectors tables for picking up of details of age, gender, color, wage and
     average number of people in the family, by census sectors.
     """
-    # site = r"ftp.ibge.gov.br"
-    # folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
-    # download_from_ibge(site, folder, 'setores')
+    site = r"ftp.ibge.gov.br"
+    folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
+    download_from_ibge(site, folder, 'setores')
     # After downloading, unzip one by one, extract data and delete, except original zipfile
     # Get list of files
     sectors = r'data/setores'
@@ -221,13 +235,12 @@ def get_sectors():
     output1 = read_age_gender(files, sectors)
     output2 = get_color(files, sectors)
     output3 = get_wage_num_family(files, sectors)
-
-    # shutil.rmtree(sectors)
+    shutil.rmtree(sectors)
     return output1, output2, output3
 
 
 if __name__ == '__main__':
     if not os.path.exists('processed'):
         os.mkdir('processed')
-    n, m, o = get_sectors()
+    # n, m, o = get_sectors()
     p = get_weighted_areas()
