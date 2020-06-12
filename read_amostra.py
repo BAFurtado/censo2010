@@ -30,10 +30,11 @@ def download_from_ibge(path, directory, flag='setores'):
     ftp.login("anonymous", "censo2010")
     ftp.cwd(directory)
     files = ftp.nlst()
-
+    print(files)
     for file in files:
-        with open(os.path.join('data', flag, file), 'wb') as f:
-            ftp.retrbinary('RETR ' + file, f.write)
+        if file.endswith('.zip'):
+            with open(os.path.join('data', flag, file), 'wb') as f:
+                ftp.retrbinary('RETR ' + file, f.write)
 
 
 def unzip_files_temp(file, flag=r'data/setores'):
@@ -48,7 +49,7 @@ def unzip_files_temp(file, flag=r'data/setores'):
         with ZipFile(os.path.join(flag, file), 'r') as zip_ref:
             # Extracting all the files
             path = zip_ref.namelist()
-            # zip_ref.extractall(flag)
+            zip_ref.extractall(flag)
     except BadZipFile:
         return
     except IsADirectoryError as e:
@@ -57,9 +58,9 @@ def unzip_files_temp(file, flag=r'data/setores'):
         file = os.listdir(file)
         with ZipFile(file[0], 'r') as zip_ref:
             # Extracting all the files
-            # zip_ref.printdir()
+            zip_ref.printdir()
             path = zip_ref.namelist()
-            # zip_ref.extractall(flag)
+            zip_ref.extractall(flag)
     return path
 
 
