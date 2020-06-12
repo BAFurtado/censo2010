@@ -1,6 +1,6 @@
 ## Dados para Geração População Artificial por Áreas de Ponderação Censo 2010 IBGE
 
-This is just a documented script. We gather official data and use generator at 
+This is just a documented script. We gather official data and use **generator.py** at 
 https://github.com/BAFurtado/home_violence to come up with a random artificial population with gender, age and years 
 of study and color at the level of census tracts.
 

@@ -23,6 +23,9 @@ columns_weighted_areas = [(7, 20), (28, 44), (157, 158)]
 
 def download_from_ibge(path, directory, flag='setores'):
     """ Download all zip files of census tract data """
+    if not os.path.exists(os.path.join('data', flag)):
+        os.makedirs(os.path.join('data', flag))
+
     ftp = ftplib.FTP(path)
     ftp.login("anonymous", "censo2010")
     ftp.cwd(directory)
@@ -126,7 +129,7 @@ def get_color(files, sectors):
         new = pd.DataFrame()
         new['AREAP'] = data['AREAP']
         for each in [1, 2, 3, 4, 5]:
-            new[names[each - 1]] = data.apply(lambda x: x[each] / x[1:5].sum(), axis=1)
+            new[names[each - 1]] = data.apply(lambda x: x[each] / x[1:].sum(), axis=1)
         new = new.melt(id_vars=['AREAP'], var_name=['cor'])
         output = pd.concat([output, new])
     output.to_csv('processed/etnia_ap.csv', sep=';', index=False)
@@ -223,12 +226,13 @@ def get_sectors():
     output1 = read_age_gender(files, sectors)
     output2 = get_color(files, sectors)
     output3 = get_wage_num_family(files, sectors)
+
     shutil.rmtree(sectors)
     return output1, output2, output3
 
 
 if __name__ == '__main__':
-    if not os.path.exists('data/processed'):
-        os.mkdir('data/processed')
+    if not os.path.exists('processed'):
+        os.mkdir('processed')
     n, m, o = get_sectors()
     p = get_weighted_areas()
