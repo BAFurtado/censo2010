@@ -47,10 +47,7 @@ def unzip_files_temp(file, flag=r'data/setores'):
     try:
         with ZipFile(os.path.join(flag, file), 'r') as zip_ref:
             # Extracting all the files
-            zip_ref.printdir()
             path = zip_ref.namelist()
-            if path[0][:2] not in states_link:
-                return
             zip_ref.extractall(flag)
     except BadZipFile:
         return
@@ -60,10 +57,8 @@ def unzip_files_temp(file, flag=r'data/setores'):
         file = os.listdir(file)
         with ZipFile(file[0], 'r') as zip_ref:
             # Extracting all the files
-            zip_ref.printdir()
+            # zip_ref.printdir()
             path = zip_ref.namelist()
-            if path[0][:2] not in states_link:
-                return
             zip_ref.extractall(flag)
     return path
 
@@ -114,24 +109,24 @@ def get_color(files, sectors):
         unzipped_path = unzip_files_temp(file, sectors)
         if not unzipped_path:
             continue
-        try:
-            data = pd.read_csv(os.path.join(sectors, unzipped_path[14]), sep=';')
-        except FileNotFoundError:
-            continue
-        data = data[['Cod_setor', 'V002', 'V003', 'V004', 'V005', 'V006']]
-        data = data.replace('X', 0)
-        data = pd.merge(data, aps, on='Cod_setor', how='inner')
-        data = data.astype(int)
-        data = data.groupby('AREAP').agg(sum)
-        data = data.drop('Cod_setor', axis=1)
-        data = data.reset_index()
-        names = ['branca', 'preta', 'amarela', 'parda', 'indigena']
-        new = pd.DataFrame()
-        new['AREAP'] = data['AREAP']
-        for each in [1, 2, 3, 4, 5]:
-            new[names[each - 1]] = data.apply(lambda x: x[each] / x[1:].sum(), axis=1)
-        new = new.melt(id_vars=['AREAP'], var_name=['cor'])
-        output = pd.concat([output, new])
+        for each in unzipped_path:
+            if 'Pessoa03_' in each and '.csv' in each and each.split('_')[-1][:2] in states_link:
+                print(each)
+                data = pd.read_csv(os.path.join(sectors, each), sep=';')
+                data = data[['Cod_setor', 'V002', 'V003', 'V004', 'V005', 'V006']]
+                data = data.replace('X', 0)
+                data = pd.merge(data, aps, on='Cod_setor', how='inner')
+                data = data.astype(int)
+                data = data.groupby('AREAP').agg(sum)
+                data = data.drop('Cod_setor', axis=1)
+                data = data.reset_index()
+                names = ['branca', 'preta', 'amarela', 'parda', 'indigena']
+                new = pd.DataFrame()
+                new['AREAP'] = data['AREAP']
+                for each in [1, 2, 3, 4, 5]:
+                    new[names[each - 1]] = data.apply(lambda x: x[each] / x[1:].sum(), axis=1)
+                new = new.melt(id_vars=['AREAP'], var_name=['cor'])
+                output = pd.concat([output, new])
     output.to_csv('processed/etnia_ap.csv', sep=';', index=False)
     return output
 
@@ -216,9 +211,9 @@ def get_sectors():
     """ General download and send list of sectors tables for picking up of details of age, gender, color, wage and
     average number of people in the family, by census sectors.
     """
-    site = r"ftp.ibge.gov.br"
-    folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
-    download_from_ibge(site, folder, 'setores')
+    # site = r"ftp.ibge.gov.br"
+    # folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
+    # download_from_ibge(site, folder, 'setores')
     # After downloading, unzip one by one, extract data and delete, except original zipfile
     # Get list of files
     sectors = r'data/setores'
@@ -227,7 +222,7 @@ def get_sectors():
     output2 = get_color(files, sectors)
     output3 = get_wage_num_family(files, sectors)
 
-    shutil.rmtree(sectors)
+    # shutil.rmtree(sectors)
     return output1, output2, output3
 
 
