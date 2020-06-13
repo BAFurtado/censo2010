@@ -11,7 +11,7 @@ import geopandas as gpd
 import pandas as pd
 
 
-def download_from_ibge(path, directory, flag='shapes'):
+def download_from_ibge(path, directory, flag='shapes_setores'):
     """ Download all zip files of census tract data """
     if not os.path.exists(os.path.join('data', flag)):
         os.makedirs(os.path.join('data', flag))
@@ -45,20 +45,15 @@ def read_census_tracts_by_uf():
     pass
 
 
-def add_shapes(flag):
-    output = gpd.GeoDataFrame()
-    for file in os.listdir(flag):
-        if os.path.isdir(os.path.join(flag, file)):
-            os.chdir(os.path.join(flag, file))
-            shp = [x for x in os.listdir('.') if x.endswith('shp')]
-            for each in shp:
-                try:
-                    temp = gpd.read_file(each)
-                except IndexError:
-                    continue
-                output = pd.concat([output, temp])
-            os.chdir('../../..')
-    return output
+def add_shapes(flag, aps_setores):
+    files = os.listdir(flag)
+    shps = [x for x in files if x.endswith('.shp')]
+    for file in shps:
+        temp = gpd.read_file(os.path.join(flag, file))
+        temp = temp.merge(aps_setores, on='CD_GEOCODI')
+        temp = temp[['AREAP', 'geometry']]
+
+    return
 
 
 def main(path, directory, flag, data_flag):
@@ -72,9 +67,12 @@ def main(path, directory, flag, data_flag):
 if __name__ == '__main__':
     site = r'geoftp.ibge.gov.br'
     folder = r'organizacao_do_territorio/malhas_territoriais/malhas_de_setores_censitarios__divisoes_intramunicipais/censo_2010/setores_censitarios_shp/'
-    fl = 'shapes'
-    data_fl = 'data/shapes'
-
-    main(site, folder, fl, data_fl)
+    fl = 'shapes_setores'
+    data_fl = 'data/shapes_setores'
+    aps = pd.read_csv('data/areas_ponderacao_setores.csv', encoding='utf-16', sep='\t')
+    aps = aps.rename(columns={'setor': 'CD_GEOCODI'})
+    aps.CD_GEOCODI = aps.CD_GEOCODI.astype(str)
+    # main(site, folder, fl, data_fl)
+    add_shapes(data_fl)
 
 
