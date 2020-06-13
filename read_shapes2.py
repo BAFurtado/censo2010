@@ -10,6 +10,8 @@ from zipfile import ZipFile
 import geopandas as gpd
 import pandas as pd
 
+from sectors_of_interest import list_muns, states_link, aps
+
 
 def download_from_ibge(path, directory, flag='shapes_setores'):
     """ Download all zip files of census tract data """
@@ -51,7 +53,10 @@ def add_shapes(flag, aps_setores):
     for file in shps:
         temp = gpd.read_file(os.path.join(flag, file))
         temp = temp.merge(aps_setores, on='CD_GEOCODI')
+        if len(temp) == 0:
+            continue
         temp = temp[['AREAP', 'geometry']]
+        temp = temp.dissolve(by='AREAP')
 
     return
 
@@ -69,10 +74,9 @@ if __name__ == '__main__':
     folder = r'organizacao_do_territorio/malhas_territoriais/malhas_de_setores_censitarios__divisoes_intramunicipais/censo_2010/setores_censitarios_shp/'
     fl = 'shapes_setores'
     data_fl = 'data/shapes_setores'
-    aps = pd.read_csv('data/areas_ponderacao_setores.csv', encoding='utf-16', sep='\t')
-    aps = aps.rename(columns={'setor': 'CD_GEOCODI'})
+    aps = aps.rename(columns={'Cod_setor': 'CD_GEOCODI'})
     aps.CD_GEOCODI = aps.CD_GEOCODI.astype(str)
     # main(site, folder, fl, data_fl)
-    add_shapes(data_fl)
+    add_shapes(data_fl, aps)
 
 
