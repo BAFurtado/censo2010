@@ -1,7 +1,14 @@
 ## Dados para Geração População Artificial por Áreas de Ponderação Censo 2010 IBGE
 
-## Also. Weighted Areas (areas de ponderação) do IBGE. 
-##### Dissolved from original census tract. Official are missing some (no idea why)
+## Áreas de ponderação do IBGE, dissolvidos dos setores censitários originais. Completa
+
+## Also. Weighted Areas (areas de ponderação) do IBGE. Find them by UF (state) 
+### Dissolved from original census tract. Official are missing some (no idea why)
+
+Os dados estão separados por código de uf. O código porém também gera o Brasil completo 72 MB.
+Se quiser TODAS as áreas de ponderação do país (não disponíveis no IBGE) e não filtradas pelas Áreas 
+de Concentração da População (como utilizadas nesse trabalho), comente a linha #53 do arquivo `read_shapes2.py`
+
 This is just a documented script. We gather official data and use **generator.py** at 
 https://github.com/BAFurtado/home_violence to come up with a random artificial population with gender, age and years 
 of study and color at the level of census tracts.
