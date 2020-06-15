@@ -204,12 +204,18 @@ def get_wage_num_family(files, sectors):
         for each in unzipped_path:
             if 'Basico_' in each and '.csv' in each and each.split('_')[-1][:2] in states_link:
                 print(each)
-                try:
-                    data = pd.read_csv(os.path.join(sectors, unzipped_path[3]), sep=';', encoding='latin-1', decimal=',')
-                except FileNotFoundError:
-                    continue
+                data = pd.read_csv(os.path.join(sectors, each), sep=';', encoding='latin-1', decimal=',')
                 # Variables of interest (mu, sigma for number of people per family and nominal wage)
-                data = data[['Cod_setor', 'V003', 'V004', 'V009', 'V010']]
+                try:
+                    data = data[['Cod_setor', 'V003', 'V004', 'V009', 'V010']]
+                except KeyError:
+                    data = data[['ï»¿Cod_setor', 'V003', 'V004', 'V009', 'V010']]
+                    data = data.rename(columns={'ï»¿Cod_setor': 'Cod_setor'})
+                except KeyError:
+                    print('Problems with column name, using column index instead. Yes. Go figure IBGE')
+                    print(data.columns)
+                    data['Cod_setor'] = data.iloc[:, 0]
+                    data = data[['Cod_setor', 'V003', 'V004', 'V009', 'V010']]
                 data = pd.merge(data, aps, on='Cod_setor', how='inner')
                 # Average of averages and variances of sectors by weighted areas
                 data = data.groupby('AREAP').agg(np.mean)
@@ -243,5 +249,5 @@ def get_sectors():
 if __name__ == '__main__':
     if not os.path.exists('processed'):
         os.mkdir('processed')
-    # n, m, o = get_sectors()
+    n, m, o = get_sectors()
     p = get_weighted_areas()
