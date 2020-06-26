@@ -1,34 +1,74 @@
-## Dados para Geração População Artificial por Áreas de Ponderação Censo 2010 IBGE
+### Geração Famílias Artificiais por Áreas de Ponderação Censo 2010 IBGE
 
-## Áreas de ponderação do IBGE, dissolvidos dos setores censitários originais. Completa
+### Áreas de ponderação do IBGE, dissolvidos dos setores censitários originais. Completa
 
-## Also. Weighted Areas (areas de ponderação) do IBGE. Find them by UF (state) 
-### Dissolved from original census tract. Official are missing some (no idea why)
+#### This repository downloads data from Brazilian census 2010, including census tracts. 
+#### Then, it generates artificial populations by census block (which are constructed from original sectors)
 
-Os dados estão separados por código de uf. O código porém também gera o Brasil completo 72 MB.
-Se quiser TODAS as áreas de ponderação do país (não disponíveis no IBGE) e não filtradas pelas Áreas 
-de Concentração da População (como utilizadas nesse trabalho), comente a linha #53 do arquivo `read_shapes2.py`
+## Objeto
 
-This is just a documented script. We gather official data and use **generator.py** at 
-https://github.com/BAFurtado/home_violence to come up with a random artificial population with gender, age and years 
-of study and color at the level of census tracts.
+1. Este repositório gera dados de população artificial, a partir dos dados do censo 2010.
+2. Adicionalmente, contém as funcionalidades para 
+    
+    2.1 Download, extração e junção dos shapes de setores censitários de todas as UFs, e os une (dissolve) 
+    por áreas de ponderação.
+    
+    2.2 Os resultados são apresentados apenas para as 46 Áreas de Concentração de População do IBGE. 
+    Porém, as funcionalidades para gerar populações para qualquer município também esté presente. 
+    Para fazê-lo, comente a linha #53 do arquivo `sectors_into_APs.py`
+    
+    2.3 Os dados estão separados por código de uf. O código porém também gera o Brasil completo 72 MB.
+ 
+Originally, this was constructed to be used at https://github.com/BAFurtado/home_violence. 
+However, it might be useful on its own.
 
-It acquires data from Brazilian official statistics bureau (ibge.gov.br) and organizes the data for the format needed 
-at https://github.com/BAFurtado/home_violence
+####  Cite as: Furtado, Bernardo Alves (2020). Gerando Famílias Artificiais Intraurbanas: censo 2010. Brasília, Ipea.
 
-1. We download census tract data and sampled weighted areas data 
-2. Extract information from tables and from text-like data (pd.read_fwf)
-3. Output, organized by weighted areas, counting people by gender and age, by qualification status
-4. Output as a single files, for both
+## Output
 
-#### This is all restricted to metropolitan areas of interest (ACPs, IBGE/2015)
+1. pandas.DataFrame com um indivíduo por linha, contendo:
 
-memoire-aide about handling large files with python (not used here, though)
+    a. AREAP: área de ponderação
+    
+    b. gender
+    
+    c. age
+    
+    d. years_study (anos de instrução)
+    
+    e. color
+    
+    f. salário 
+    
+    g. category (se criança ou adulto e genero) 
+    
+2. Adicionalmente, uma lista de listas contendo os **indexes** do DataFrame de indivíduos referentes às famílias de 
+cada um. 
 
-https://towardsdatascience.com/how-to-process-a-dataframe-with-billions-of-rows-in-seconds-c8212580f447
 
-1. Numero pessoas por idade por genero por AP
-2. Percentual de grau de instrução por AP
-3. Cor por AP
-4. Salario da família (média, variância)
-5. Número médio pessoas na família (média, variância)
+# How to run
+
+1. `clone` the repository 
+2. `import generator`
+3. Create a `dict` that includes at least
+
+
+    metro = 'CAMPINAS'
+    params = dict()
+    params['PROCESSING_ACPS'] = [metro]
+    params['INITIAL_FAMILIES'] = 1000
+    params['DATA_YEAR'] = 2010
+    people, families = generator.main(params)`
+
+
+##### Possible metropolises include:
+
+`
+metropolis = ["MANAUS", "BELEM", "MACAPA", "SAO LUIS", "TERESINA", "FORTALEZA", "CRAJUBAR", "NATAL", "JOAO PESSOA",
+              "CAMPINA GRANDE", "RECIFE", "MACEIO", "ARACAJU", "SALVADOR", "FEIRA DE SANTANA",
+              "ILHEUS - ITABUNA", "PETROLINA - JUAZEIRO", "BELO HORIZONTE", "JUIZ DE FORA", "IPATINGA", "UBERLANDIA",
+              "VITORIA", "VOLTA REDONDA - BARRA MANSA", "RIO DE JANEIRO", "CAMPOS DOS GOYTACAZES", "SAO PAULO",
+              "CAMPINAS", "SOROCABA", "SAO JOSE DO RIO PRETO", "SANTOS", "JUNDIAI", "SAO JOSE DOS CAMPOS",
+              "RIBEIRAO PRETO", "CURITIBA", "LONDRINA", "MARINGA", "JOINVILLE", "FLORIANOPOLIS", "PORTO ALEGRE",
+              "NOVO HAMBURGO - SAO LEOPOLDO", "CAXIAS DO SUL", "PELOTAS - RIO GRANDE", "CAMPO GRANDE", "CUIABA",
+              "GOIANIA", "BRASILIA"]`
