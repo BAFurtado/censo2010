@@ -38,13 +38,12 @@ However, it might be useful on its own.
     
     e. color
     
-    f. salário 
+    f. salário (proporcional entre 0 e 1)
     
     g. category (se criança ou adulto e genero) 
     
 2. Adicionalmente, uma lista de listas contendo os **indexes** do DataFrame de indivíduos referentes às famílias de 
-cada um. 
-
+cada um. Nesse caso, é considerado o tamanho médio das famílias por APs.
 
 # How to run
 
@@ -52,6 +51,7 @@ cada um.
 2. `import generator`
 3. Create a `dict` that includes at least
 
+`
 
     metro = 'CAMPINAS'
     params = dict()
