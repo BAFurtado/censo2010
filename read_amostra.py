@@ -99,7 +99,7 @@ def get_weighted_areas():
         data = data.melt(id_vars=['AREAP'], var_name=['qual'])
         output = pd.concat([output, data])
         shutil.rmtree(os.path.join(areas, unzipped_path[0]))
-    output.to_csv('processed/quali_aps.csv', sep=';', index=False)
+    output.to_csv('input/quali_aps.csv', sep=';', index=False)
     shutil.rmtree(areas)
     return output
 
@@ -128,7 +128,7 @@ def get_color(files, sectors):
                     new[names[each - 1]] = data.apply(lambda x: x[each] / x[1:].sum(), axis=1)
                 new = new.melt(id_vars=['AREAP'], var_name=['cor'])
                 output = pd.concat([output, new])
-    output.to_csv('processed/etnia_ap.csv', sep=';', index=False)
+    output.to_csv('input/etnia_ap.csv', sep=';', index=False)
     return output
 
 
@@ -191,7 +191,7 @@ def read_age_gender(files, sectors):
             data = data.melt(id_vars=['AREAP', 'gender'], var_name=['age'])
             data = data.rename(columns={'value': 'num_people'})
             output = pd.concat([output, data])
-    output.to_csv('processed/num_people_age_gender_AP.csv', sep=';', index=False)
+    output.to_csv('input/num_people_age_gender_AP.csv', sep=';', index=False)
     return output
 
 
@@ -224,7 +224,7 @@ def get_wage_num_family(files, sectors):
                 output = pd.concat([output, data])
     output = output.rename(columns={'V003': 'avg_num_people', 'V004': 'var_num_people',
                                     'V009': 'avg_wage', 'V010': 'var_wage'})
-    output.to_csv('processed/average_variance_family_wages.csv', sep=';', index=False)
+    output.to_csv('input/average_variance_family_wages.csv', sep=';', index=False)
     return output
 
 
@@ -234,20 +234,21 @@ def get_sectors():
     """
     site = r"ftp.ibge.gov.br"
     folder = r'Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios'
-    download_from_ibge(site, folder, 'setores')
+    # download_from_ibge(site, folder, 'setores')
     # After downloading, unzip one by one, extract data and delete, except original zipfile
     # Get list of files
     sectors = r'data/setores'
     files = os.listdir(sectors)
     output1 = read_age_gender(files, sectors)
-    output2 = get_color(files, sectors)
-    output3 = get_wage_num_family(files, sectors)
-    shutil.rmtree(sectors)
+    # output2 = get_color(files, sectors)
+    # output3 = get_wage_num_family(files, sectors)
+    # shutil.rmtree(sectors)
+    output2, output3 = None, None
     return output1, output2, output3
 
 
 if __name__ == '__main__':
-    if not os.path.exists('processed'):
-        os.mkdir('processed')
+    if not os.path.exists('input'):
+        os.mkdir('input')
     n, m, o = get_sectors()
     p = get_weighted_areas()
