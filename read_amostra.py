@@ -99,7 +99,7 @@ def get_weighted_areas():
         data = data.melt(id_vars=['AREAP'], var_name=['qual'])
         output = pd.concat([output, data])
         shutil.rmtree(os.path.join(areas, unzipped_path[0]))
-    output.to_csv('input/quali_aps.csv', sep=';', index=False)
+    output.to_csv('input/quali_AP.csv', sep=';', index=False)
     shutil.rmtree(areas)
     return output
 
@@ -128,7 +128,7 @@ def get_color(files, sectors):
                     new[names[each - 1]] = data.apply(lambda x: x[each] / x[1:].sum(), axis=1)
                 new = new.melt(id_vars=['AREAP'], var_name=['cor'])
                 output = pd.concat([output, new])
-    output.to_csv('input/etnia_ap.csv', sep=';', index=False)
+    output.to_csv('input/etnia_AP.csv', sep=';', index=False)
     return output
 
 
@@ -240,9 +240,9 @@ def get_sectors():
     sectors = r'data/setores'
     files = os.listdir(sectors)
     output1 = read_age_gender(files, sectors)
-    # output2 = get_color(files, sectors)
-    # output3 = get_wage_num_family(files, sectors)
-    # shutil.rmtree(sectors)
+    output2 = get_color(files, sectors)
+    output3 = get_wage_num_family(files, sectors)
+    shutil.rmtree(sectors)
     output2, output3 = None, None
     return output1, output2, output3
 

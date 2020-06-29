@@ -36,7 +36,7 @@ def quali_table(params):
     my_geo = geo.list_mun_codes(params)
     mun_codes = [str(value) for value in my_geo]
     # Load qualifications data 2000, combining municipal-level with AP-level
-    quali_aps = pd.read_csv(f"input/{params['DATA_YEAR']}/quali_aps.csv", sep=';')
+    quali_aps = pd.read_csv(f"input/{params['DATA_YEAR']}/quali_AP.csv", sep=';')
     quali_aps.AREAP = quali_aps.AREAP.astype(str)
     selected_quali = quali_aps[quali_aps.AREAP.str[:7].isin(mun_codes)]
     return selected_quali
