@@ -187,6 +187,6 @@ if __name__ == '__main__':
     # Necessary parameters to generate data
     prms = dict()
     prms['PROCESSING_ACPS'] = [metro]
-    prms['INITIAL_FAMILIES'] = 1000
+    prms['INITIAL_FAMILIES'] = 2500
     prms['DATA_YEAR'] = 2010
     ppl, fams = main(prms)
