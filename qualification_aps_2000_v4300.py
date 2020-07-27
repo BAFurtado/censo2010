@@ -29,7 +29,7 @@ def main(download=False, unzip=False, extracting=True):
         for file in files:
             unzip_files_temp(file, directory)
     # Extracting info of V4300
-    results = dict()
+    results = pd.DataFrame()
     if extracting:
         for file in os.listdir(directory):
             if len(file) == 2:
@@ -45,11 +45,10 @@ def main(download=False, unzip=False, extracting=True):
                                                      totals[totals['AREAP'] == data.loc[19, 'AREAP']]['weight'].item()
                             output.loc[i, 'AREAP'] = data.loc[i, 'AREAP']
                             output.loc[i, 'V4300'] = data.loc[i, 'V4300']
-                        print('perai')
+                        results = pd.concat([results, output.pivot(columns='V4300', index='AREAP', values='value')])
                         break
+    results.to_csv('input/2000/quali_aps.csv', sep=';', index=False)
     return results
-
-
 
 
 if __name__ == '__main__':
