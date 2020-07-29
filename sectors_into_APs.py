@@ -10,7 +10,7 @@ from zipfile import ZipFile
 import geopandas as gpd
 import pandas as pd
 
-from sectors_of_interest import list_muns, states_link, aps
+from sectors_of_interest import list_muns, states_link, aps, aps_selected
 
 
 def download_from_ibge(path, directory, flag='shapes_setores'):
@@ -43,7 +43,7 @@ def unzipping_census_tract(file, flag):
     return path
 
 
-def census_into_weighted_areas(flag, aps_setores):
+def census_into_weighted_areas(flag, aps_setores, selected=False):
     brasil = gpd.GeoDataFrame()
     files = os.listdir(flag)
     shps = [x for x in files if x.endswith('.shp')]
@@ -57,9 +57,12 @@ def census_into_weighted_areas(flag, aps_setores):
         temp['geometry'] = temp['geometry'].buffer(0.000001)
         temp = temp.dissolve(by='AREAP')
         name = file[:2]
-        temp.to_file(f'data/areas/{name}.shp')
+        if selected:
+            temp.to_file(f'data/areas/{name}.shp')
+        else:
+            temp.to_file(f'data/areas/{name}_all_muns.shp')
         brasil = pd.concat([temp, brasil])
-    brasil.to_file('data/areas/brasil.shp')
+    # brasil.to_file('data/areas/brasil.shp')
 
 
 def main(path, directory, flag, data_flag, aps_setores):
@@ -78,5 +81,8 @@ if __name__ == '__main__':
     data_fl = 'data/shapes_setores'
     aps = aps.rename(columns={'Cod_setor': 'CD_GEOCODI'})
     aps.CD_GEOCODI = aps.CD_GEOCODI.astype(str)
+    aps_selected = aps_selected.rename(columns={'Cod_setor': 'CD_GEOCODI'})
+    aps_selected.CD_GEOCODI = aps_selected.CD_GEOCODI.astype(str)
     # main(site, folder, fl, data_fl, aps)
     census_into_weighted_areas(data_fl, aps)
+    census_into_weighted_areas(data_fl, aps_selected, True)

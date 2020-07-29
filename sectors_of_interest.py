@@ -13,6 +13,8 @@ states_link = list(states_[states_['nummun'].astype(str).isin(states)].loc[:, 'c
 # Restricting mapping from sectors to weighted areas for municipalities of interest only
 aps = pd.read_csv('data/areas_ponderacao_setores.csv', encoding='utf-16', sep='\t')
 aps['mun'] = aps.loc[:, 'AREAP'].astype(str).str[:7]
-aps = aps[aps['mun'].isin(list_muns)]
+aps_selected = aps[aps['mun'].isin(list_muns)]
 aps = aps[['AREAP', 'setor']]
 aps.columns = ['AREAP', 'Cod_setor']
+aps_selected = aps_selected[['AREAP', 'setor']]
+aps_selected.columns = ['AREAP', 'Cod_setor']
