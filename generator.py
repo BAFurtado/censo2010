@@ -183,7 +183,7 @@ def main(params):
 
 
 if __name__ == '__main__':
-    metro = 'CAMPINAS'
+    metro = 'PORTO VELHO'
     # Necessary parameters to generate data
     prms = dict()
     prms['PROCESSING_ACPS'] = [metro]
