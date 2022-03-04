@@ -100,7 +100,7 @@ def get_weighted_areas():
         output = pd.concat([output, data])
         shutil.rmtree(os.path.join(areas, unzipped_path[0]))
     output.to_csv('input/quali_AP.csv', sep=';', index=False)
-    shutil.rmtree(areas)
+    # shutil.rmtree(areas)
     return output
 
 
