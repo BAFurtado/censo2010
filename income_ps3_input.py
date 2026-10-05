@@ -25,6 +25,12 @@ for path in sorted(glob.glob(os.path.join(BASE, 'data/setores/*/CSV/Basico_*.csv
     data = pd.read_csv(path, sep=';', encoding='latin-1', dtype=str)
     data = data.rename(columns={data.columns[0]: 'Cod_setor'})
     data['Cod_setor'] = pd.to_numeric(data['Cod_setor'], errors='coerce')
+    if data['Cod_setor'].isna().all():
+        # Some state CSVs (AC) store the setor code in scientific notation; the XLS keeps all 15 digits
+        xls = glob.glob(os.path.join(os.path.dirname(os.path.dirname(path)), 'EXCEL', 'Basico_*.[xX][lL][sS]'))[0]
+        data = pd.read_excel(xls, dtype=str)
+        data = data.rename(columns={data.columns[0]: 'Cod_setor'})
+        data['Cod_setor'] = pd.to_numeric(data['Cod_setor'], errors='coerce')
     for col in ['V002', 'V009']:
         data[col] = pd.to_numeric(data[col].str.replace(',', '.'), errors='coerce')
     data = data.dropna(subset=['Cod_setor', 'V002', 'V009'])
